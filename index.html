@@ -42,23 +42,32 @@
 <div id="toast"></div>
 <div id="lvCard"><small id="lcT"></small><div id="lcG"></div><em id="lcTip"></em></div>
 <div id="opening"><div id="oTitle"><span class="w1">CAULDRON</span><span class="w2">ERUPTION</span><div id="oSub">6 days to Halloween 🎃</div></div></div>
-<button id="btnSkip" class="pill" data-t="skip">Skip ⏭</button>
-<button id="btnTapSound" class="pill" data-t="tapSound">🔊 Tap for sound</button>
+<button id="btnSkip" class="pill tapPlay" data-t="tapPlay">▶ Tap anywhere to play</button>
 <section id="menu" class="panel">
-  <div class="kicker" data-t="countdown"></div>
-  <h1><span class="w1">CAULDRON</span><span class="w2">ERUPTION</span></h1>
-  <p class="sub" data-t="tagline"></p>
-  <button id="btnPlay" class="big"><span data-t="play"></span><em id="playL"></em></button>
-  <div class="lab" data-t="levelsL"></div>
+  <div class="mTop">
+    <div class="kicker" data-t="countdown"></div>
+    <h1><span class="w1">CAULDRON</span><span class="w2">ERUPTION</span></h1>
+    <p class="sub" data-t="tagline"></p>
+  </div>
+  <div class="mPlay">
+    <button id="btnPlay" class="play"><span class="pl" data-t="play"></span><em id="playL"></em></button>
+    <button id="btnMore" class="ghost" aria-haspopup="dialog" aria-expanded="false"><span data-t="more"></span></button>
+    <p class="tip credit" data-t="credit"></p>
+  </div>
+</section>
+<div id="moreBg"></div>
+<section id="more" class="panel" role="dialog" aria-labelledby="moreT">
+  <div class="sheetHead"><b id="moreT" data-t="moreT"></b><button id="btnMoreX" class="pill" aria-label="Close">✕</button></div>
+  <div class="lab labLv" data-t="levelsL"></div>
   <div id="levels"></div>
   <button id="btnDuel" class="big alt"><span data-t="duel"></span><em data-t="duelInfo"></em></button>
-  <div class="lab" data-t="diffL"></div>
+  <div class="lab labDiff" data-t="diffL"></div>
   <div id="diff" role="group"><button data-d="easy" data-t="easy"></button><button data-d="medium" data-t="medium"></button><button data-d="hard" data-t="hard"></button></div>
-  <div class="row"><button id="btnKids" class="toggle" aria-pressed="false"><i></i><span data-t="kids"></span></button><button id="btnIntro" class="pill" data-t="replay"></button></div>
+  <div class="row rowKids"><button id="btnKids" class="toggle" aria-pressed="false"><i></i><span data-t="kids"></span></button></div>
+  <div class="row rowOpt"><button id="btnQ2" class="opt"></button><button id="btnIntro" class="opt" data-t="replay"></button></div>
   <p class="tip kidsTip" data-t="kidsInfo"></p>
   <p class="tip how"><span data-t="how1"></span> <span data-t="how2"></span> <span data-t="how3"></span></p>
   <p class="tip keys" id="keysTip"></p>
-  <p class="tip credit" data-t="credit"></p>
 </section>
 <section id="end" class="panel">
   <div class="kicker" id="eLevel"></div>

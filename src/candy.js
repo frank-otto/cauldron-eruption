@@ -43,11 +43,13 @@ function lolliGeo() { const pts = [new THREE.Vector2(0, -.075)]; for (let i = 0;
 function batShape() { const s = new THREE.Shape(); s.moveTo(0, .12); s.quadraticCurveTo(.06, .2, .09, .14); s.quadraticCurveTo(.2, .2, .42, .2); s.quadraticCurveTo(.36, .1, .4, -.02);
   s.quadraticCurveTo(.3, 0, .26, -.1); s.quadraticCurveTo(.18, -.04, .12, -.16); s.quadraticCurveTo(.05, -.1, 0, -.2);
   s.quadraticCurveTo(-.05, -.1, -.12, -.16); s.quadraticCurveTo(-.18, -.04, -.26, -.1); s.quadraticCurveTo(-.3, 0, -.4, -.02); s.quadraticCurveTo(-.36, .1, -.42, .2); s.quadraticCurveTo(-.2, .2, -.09, .14); s.quadraticCurveTo(-.06, .2, 0, .12); return s; }
-function skullGroup(mat, eyeMat) { const g = new THREE.Group(); const cr = new THREE.Mesh(new THREE.SphereGeometry(.29, 32, 24), mat); cr.scale.set(1, .92, .95); cr.position.y = .04; g.add(cr);
-  const jaw = new THREE.Mesh(new THREE.SphereGeometry(.2, 24, 16), mat); jaw.scale.set(.95, .62, .8); jaw.position.set(0, -.16, .08); g.add(jaw);
-  for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(.078, 16, 12), eyeMat); e.scale.set(1, 1.1, .55); e.position.set(sx * .105, .0, .245); g.add(e); }
-  const no = new THREE.Mesh(new THREE.ConeGeometry(.035, .07, 3), eyeMat); no.position.set(0, -.1, .262); no.rotation.x = Math.PI; g.add(no);
-  for (let k = -2; k <= 2; k++) { const t = new THREE.Mesh(new THREE.BoxGeometry(.03, .05, .02), eyeMat); t.position.set(k * .042, -.2, .225); g.add(t); } return g; }
+// shared geometry: every candy is built from cached geometries (building new ones per piece leaked GPU memory on every refill)
+const _sg = {}; const sg = (k, f) => _sg[k] || (_sg[k] = f());
+function skullGroup(mat, eyeMat) { const g = new THREE.Group(); const cr = new THREE.Mesh(sg('skCr', () => new THREE.SphereGeometry(.29, 32, 24)), mat); cr.scale.set(1, .92, .95); cr.position.y = .04; g.add(cr);
+  const jaw = new THREE.Mesh(sg('skJaw', () => new THREE.SphereGeometry(.2, 24, 16)), mat); jaw.scale.set(.95, .62, .8); jaw.position.set(0, -.16, .08); g.add(jaw);
+  for (const sx of [-1, 1]) { const e = new THREE.Mesh(sg('skEye', () => new THREE.SphereGeometry(.078, 16, 12)), eyeMat); e.scale.set(1, 1.1, .55); e.position.set(sx * .105, .0, .245); g.add(e); }
+  const no = new THREE.Mesh(sg('skNose', () => new THREE.ConeGeometry(.035, .07, 3)), eyeMat); no.position.set(0, -.1, .262); no.rotation.x = Math.PI; g.add(no);
+  for (let k = -2; k <= 2; k++) { const t = new THREE.Mesh(sg('skTooth', () => new THREE.BoxGeometry(.03, .05, .02)), eyeMat); t.position.set(k * .042, -.2, .225); g.add(t); } return g; }
 export function createCandyKit(envTex) {
   const K = { mats: {}, geo: {} };
   const M = K.mats;
@@ -95,6 +97,6 @@ export function makeCandy(K, k, sp = '') { const M = K.mats, G = K.geo; const ro
   if (sp === 'b' || sp === 'b2') { const w = new THREE.Mesh(G.gummy, M.bombWrap); w.scale.setScalar(1.28); root.add(w); for (const sx of [-1, 1]) { const t = new THREE.Mesh(G.wrap, M.bombWrap); t.rotation.z = sx * Math.PI / 2; t.position.x = sx * .5; t.scale.setScalar(1.2); root.add(t); } root.userData.bomb = w; }
   return root; }
 export function makePumpkin(K) { const M = K.mats, G = K.geo; const g = new THREE.Group(); const b = new THREE.Mesh(G.pump, M.pump); b.castShadow = true; g.add(b);
-  const st = new THREE.Mesh(new THREE.CylinderGeometry(.035, .06, .2, 8), M.stem); st.position.set(.02, .32, 0); st.rotation.z = -.3; g.add(st);
-  const face = new THREE.Mesh(new THREE.SphereGeometry(.372, 32, 20, 0, Math.PI * 2, .3, 2.2), M.jack); face.scale.set(1, .78, 1); face.rotation.y = -Math.PI / 2; face.visible = false; g.add(face); g.userData = { face, body: b }; return g; }
+  const st = new THREE.Mesh(sg('pStem', () => new THREE.CylinderGeometry(.035, .06, .2, 8)), M.stem); st.position.set(.02, .32, 0); st.rotation.z = -.3; g.add(st);
+  const face = new THREE.Mesh(sg('pFace', () => new THREE.SphereGeometry(.372, 32, 20, 0, Math.PI * 2, .3, 2.2)), M.jack); face.scale.set(1, .78, 1); face.rotation.y = -Math.PI / 2; face.visible = false; g.add(face); g.userData = { face, body: b }; return g; }
 export function makeGoldSkull(K) { const g = new THREE.Group(); const s = skullGroup(K.mats.gold, K.mats.goldDark); s.scale.setScalar(1.1); s.traverse(o => { if (o.isMesh) o.castShadow = true; }); g.add(s); g.userData = { body: s }; return g; }

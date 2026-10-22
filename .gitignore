@@ -4,3 +4,4 @@ node_modules/
 test/shots/
 test/last-run.log
 *-PROGRESS.md
+test/last-mobile-run.log

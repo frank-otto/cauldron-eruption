@@ -24,7 +24,8 @@ const eo = k => 1 - Math.pow(1 - clamp(k, 0, 1), 3), eio = k => { k = clamp(k, 0
 // ---------------- rules ----------------
 const DIFF = { easy: { moves: 5, colors: 5, hint: 4, boost: [2, 2, 2], cap: 110, duel: 12 }, medium: { moves: 0, colors: 0, hint: 6, boost: [1, 1, 1], cap: 130, duel: 10 },
   hard: { moves: -3, colors: 6, hint: 10, boost: [1, 0, 1], cap: 150, duel: 8 }, kids: { moves: Infinity, colors: 5, hint: 3, boost: [9, 9, 9], cap: 90, duel: 12 } };
-const S = { state: 'intro', mode: 'level', lang: ls.get('cm-lang', '') || 'en', diff: ls.get('cm-diff', 'medium'), kids: ls.get('cm-kids', '0') === '1', q: ls.get('cm-q', ''), qUser: !!ls.get('cm-q', ''),
+function autoLang() { try { const l = (navigator.languages && navigator.languages[0]) || navigator.language || ''; return /^de\b|^de-/i.test(l) || l.toLowerCase() === 'de' ? 'de' : 'en'; } catch (e) { return 'en'; } }
+const S = { state: 'intro', mode: 'level', lang: ls.get('cm-lang', '') || autoLang(), diff: ls.get('cm-diff', 'medium'), kids: ls.get('cm-kids', '0') === '1', q: ls.get('cm-q', ''), qUser: !!ls.get('cm-q', ''),
   name: ls.get('cm-name', 'Player') || 'Player', gt: 0, ts: 1, li: 0, score: [0, 0], used: [0, 0], player: 0, meter: 0, phase: 'idle', cascade: 0, bestC: [0, 0], erupts: [0, 0], specials: [0, 0], fusions: [0, 0],
   boosts: [0, 0, 0], boostMode: null, sel: null, cur: [3, 4], kb: false, idleT: 0, hintMv: null, fovPunch: 0, camE: 0, eruptT: -1, introT: 0, goldBonus: false, lastMover: 0, endT: 0, result: null, boilWarned: false, stars: 0 };
 if (!DIFF[S.diff] || S.diff === 'kids') S.diff = 'medium';
@@ -55,7 +56,8 @@ function applyQuality(qn, user) {
   S.q = qn; if (user) { S.qUser = true; ls.set('cm-q', qn); } const q = QUALITY[qn];
   renderer.shadowMap.enabled = q.shadows; W.key.castShadow = q.shadows; if (q.shadows) { W.key.shadow.mapSize.set(q.shadowSize, q.shadowSize); if (W.key.shadow.map) { W.key.shadow.map.dispose(); W.key.shadow.map = null; } }
   scene.traverse(o => { if (o.material) { const m = Array.isArray(o.material) ? o.material : [o.material]; m.forEach(x => x.needsUpdate = true); } });
-  buildComposer(); resize(); if ($('btnQ')) $('btnQ').textContent = '⚙ ' + t('q_' + qn); }
+  buildComposer(); resize(); qLabels(); }
+function qLabels() { if ($('btnQ')) $('btnQ').textContent = '⚙ ' + t('q_' + S.q); if ($('btnQ2')) { $('btnQ2').textContent = `⚙ ${t('q_' + S.q)}${S.qUser ? '' : ' · ' + t('qAuto')}`; $('btnQ2').title = t('qL'); } }
 let VW = 1, VH = 1;
 function resize() { VW = window.innerWidth; VH = window.innerHeight; const dpr = Math.min(window.devicePixelRatio || 1, QUALITY[S.q].dpr);
   renderer.setPixelRatio(dpr); renderer.setSize(VW, VH, false); if (composer) { composer.setPixelRatio(dpr); composer.setSize(VW, VH); } camera.aspect = VW / VH; camera.updateProjectionMatrix(); fitDirty = true; }
@@ -309,7 +311,7 @@ const levelName = () => t('n_' + LV.name);
 function goalsHTML(gs, big) { return gs.map(g => `<span class="goal${g.done ? ' done' : ''}${g.t === 'items' ? ' gold' : ''}" title="${g.t === 'kind' ? KIND_NAMES[S.lang][g.k] : t('g_' + g.t)}"><i>${g.t === 'kind' ? KIND_ICON[g.k] : GOAL_ICON[g.t]}</i><b>${g.done ? '✓' : g.t === 'score' ? fmt(g.left) : g.left}</b>${big ? `<small>${g.t === 'kind' ? t('g_kind') + ' ' + KIND_NAMES[S.lang][g.k] : t('g_' + g.t)}</small>` : ''}</span>`).join(''); }
 let lastUI = '';
 function setUI() { const st = S.state; document.body.dataset.state = st; document.body.dataset.mode = S.mode; document.body.dataset.kids = S.kids ? '1' : '0'; document.body.dataset.phase = S.phase; document.body.dataset.boost = S.boostMode || '';
-  $('menu').classList.toggle('show', st === 'menu'); $('end').classList.toggle('show', st === 'end');
+  if (st !== 'menu') S.more = false; $('menu').classList.toggle('show', st === 'menu'); $('more').classList.toggle('show', st === 'menu' && !!S.more); document.body.dataset.more = S.more ? '1' : '0'; $('btnMore').setAttribute('aria-expanded', S.more ? 'true' : 'false'); $('end').classList.toggle('show', st === 'end');
   if (st !== 'play' && st !== 'end') return; const duel = isDuel(), p = duel ? S.player : 0;
   $('hLevel').textContent = duel ? t('duelT') : `${S.li + 1} · ${levelName()}`; $('hScore').textContent = fmt(S.score[p]); const ml = movesLeft(p); $('hMoves').textContent = Number.isFinite(ml) ? ml : '∞'; $('hMoves').parentElement.classList.toggle('low', Number.isFinite(ml) && ml <= 3);
   if (!duel) { const s3 = LV.stars[2], sc = S.score[0]; $('starFill').style.width = Math.min(100, sc / s3 * 100) + '%'; $('starMarks').innerHTML = LV.stars.map((v, i) => `<i style="left:${Math.min(100, v / s3 * 100)}%" class="${sc >= v && (i > 0 || goalsDone()) ? 'on' : ''}">★</i>`).join(''); const html = goalsHTML(goalState()); if (html !== lastUI) { $('goals').innerHTML = html; lastUI = html; } }
@@ -319,7 +321,7 @@ function setUI() { const st = S.state; document.body.dataset.state = st; documen
 function applyLang() { document.documentElement.lang = S.lang; document.querySelectorAll('[data-t]').forEach(el => el.textContent = t(el.dataset.t)); $('btnLang').textContent = S.lang === 'en' ? 'DE' : 'EN';
   $('keysTip').textContent = t(isTouch ? 'keysHintT' : 'keysHint'); $('oSub').textContent = t('countdown');
   const kidsOn = S.kids, diffOn = S.diff; $('btnKids').classList.toggle('on', kidsOn); $('btnKids').setAttribute('aria-pressed', kidsOn); document.querySelectorAll('#diff button').forEach(b => b.classList.toggle('on', b.dataset.d === diffOn)); $('diff').classList.toggle('off', kidsOn);
-  $('btnSound').textContent = A.isMuted() ? '🔇' : '🔊'; $('btnQ').textContent = '⚙ ' + t('q_' + S.q); lastUI = ''; buildLevelMap(); setUI(); }
+  $('btnSound').textContent = A.isMuted() ? '🔇' : '🔊'; qLabels(); $('btnSkip').textContent = t(isTouch ? 'tapPlay' : 'clickPlay'); lastUI = ''; buildLevelMap(); setUI(); }
 function buildLevelMap() { const p = prog(); const el = $('levels'); if (!el) return; el.innerHTML = LEVELS.map((L, i) => { const lock = i > p.u; const st = p.st[i] || 0;
     return `<button class="lv${lock ? ' lock' : ''}${i === p.u && !lock ? ' cur' : ''}" data-l="${i}" ${lock ? 'disabled' : ''} aria-label="${t('levelL')} ${i + 1}"><b>${lock ? '🔒' : i + 1}</b><i>${lock ? '' : '★'.repeat(st) + '☆'.repeat(3 - st)}</i></button>`; }).join('');
   el.querySelectorAll('button.lv').forEach(b => b.onclick = () => { S.li = +b.dataset.l; start('level', S.li); });
@@ -341,7 +343,7 @@ function popAt(txt, col, big, at) { if (S.state === 'intro' && !window.__cmIntro
   const now = performance.now(), delay = window.__cmManual ? 0 : Math.max(0, popQ - now); popQ = Math.max(now, popQ) + 120;
   setTimeout(() => { const el = document.createElement('div'); el.className = 'pop'; el.textContent = txt; el.style.color = col; el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.fontSize = (26 * big * (VW < 600 ? .8 : 1)) + 'px'; el.dataset.t0 = S.gt; $('pops').appendChild(el); const ps = $('pops').children; while (ps.length > 16) ps[0].remove(); }, delay); }
 function banner(s) { if (!s) return; (window.__banners = window.__banners || []).push(s); const el = $('banner'); el.textContent = s; el.dataset.t0 = S.gt; el.classList.add('show'); }
-function toast(s) { const el = $('toast'); el.textContent = s; el.classList.add('show'); el.dataset.t0 = S.gt; }
+function toast(s) { if (S.state !== 'play') return; const el = $('toast'); el.textContent = s; el.classList.add('show'); el.dataset.t0 = S.gt; }
 function updateOverlays() { // CSS-free timing (follows game time, frame exact in the video)
   for (const el of [...$('pops').children]) { const k = (S.gt - +el.dataset.t0) / 1.3; if (k >= 1) { el.remove(); continue; } el.style.opacity = String(k < .1 ? k / .1 : 1 - smooth((k - .6) / .4)); el.style.transform = `translate(-50%,-50%) translateY(${-k * 70}px) scale(${k < .12 ? .6 + k / .12 * .5 : 1.1 - k * .1})`; }
   const b = $('banner'); if (b.classList.contains('show')) { const k = (S.gt - +b.dataset.t0) / 1.6; if (k >= 1) b.classList.remove('show'); else { b.style.opacity = String(k < .08 ? k / .08 : 1 - smooth((k - .7) / .3)); b.style.transform = `translate(-50%,-50%) scale(${k < .14 ? 1.9 - smooth(k / .14) * .9 : 1 + (k - .14) * .06})`; } }
@@ -352,7 +354,7 @@ let isTouch = (() => { try { return matchMedia('(pointer: coarse)').matches; } c
 const ray = new THREE.Raycaster(), _ndc = new THREE.Vector2(), _pl = new THREE.Plane(new THREE.Vector3(0, 1, 0), -CANDY_Y), _hit = new THREE.Vector3();
 function cellAt(px, py) { if (!B) return null; _ndc.set(px / VW * 2 - 1, -(py / VH) * 2 + 1); ray.setFromCamera(_ndc, camera); if (!ray.ray.intersectPlane(_pl, _hit)) return null;
   const fx = _hit.x / CELL + (B.w - 1) / 2, fz = _hit.z / CELL + (B.h - 1) / 2; const x = Math.round(fx), y = Math.round(fz); const ok = x >= 0 && y >= 0 && x < B.w && y < B.h && !B.hole[y * B.w + x]; return { x, y, i: y * B.w + x, fx, fz, ok }; }
-function unlockAudio() { const was = A.state(); A.unlock(); setTimeout(audioBadge, 60); if (S.state === 'intro' && was !== 'running' && S.introT < 1.2 && !window.__cmManual) setTimeout(() => { if (A.state() === 'running' && S.state === 'intro') startIntro(); }, 80); }
+function unlockAudio() { A.unlock(); setTimeout(audioBadge, 60); }
 function audioBadge() { document.body.dataset.audio = A.state() === 'running' ? 'on' : 'locked'; }
 function useBoost(kind, i) { const bi = { hammer: 0, broom: 1, shuffle: 2 }[kind]; if (!canMove() || isDuel()) return false; if (!S.kids && S.boosts[bi] <= 0) { toast(t('noBoost')); return false; }
   if (kind === 'shuffle') { if (!S.kids) S.boosts[bi]--; S.boostMode = null; S.lastMover = 0; doShuffle(); setUI(); return true; }
@@ -372,7 +374,9 @@ canvas.addEventListener('pointermove', e => { ptr.set(e.clientX / VW * 2 - 1, -(
     S.sel = null; if (nx >= 0 && ny >= 0 && nx < B.w && ny < B.h && canMove()) trySwapCells(drag.i, ny * B.w + nx); } });
 canvas.addEventListener('pointerup', () => { drag = null; }); canvas.addEventListener('pointercancel', () => { drag = null; });
 window.addEventListener('keydown', e => { if (e.target && e.target.tagName === 'INPUT') return; unlockAudio(); const k = e.code;
-  if (S.state === 'intro' && (k === 'Escape' || k === 'Enter' || k === 'Space')) { e.preventDefault(); endIntro(); return; }
+  if (S.state === 'intro' && k === 'Escape') { e.preventDefault(); endIntro(); return; }
+  if (S.state === 'intro' && (k === 'Enter' || k === 'Space')) { e.preventDefault(); playNow(); return; }
+  if (S.state === 'menu' && S.more && k === 'Escape') { S.more = false; setUI(); return; }
   if (S.state === 'play') { hideLevelCard(); const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1], KeyA: [-1, 0], KeyD: [1, 0], KeyW: [0, -1], KeyS: [0, 1] }[k];
     if (d) { e.preventDefault(); S.kb = true; S.idleT = 0; if (S.sel != null) { const a = S.sel, x = BD.X(B, a) + d[0], y = BD.Y(B, a) + d[1]; S.sel = null; if (x >= 0 && y >= 0 && x < B.w && y < B.h) { trySwapCells(a, y * B.w + x); S.cur = [x, y]; } } else { S.cur = [clamp(S.cur[0] + d[0], 0, B.w - 1), clamp(S.cur[1] + d[1], 0, B.h - 1)]; A.sfx.ui(); } return; }
     if ((k === 'Space' || k === 'Enter') && !e.repeat) { e.preventDefault(); S.kb = true; const i = S.cur[1] * B.w + S.cur[0]; if (S.boostMode) { useBoost(S.boostMode, i); return; } if (canMove() && BD.swappable(B.cells[i])) { S.sel = S.sel === i ? null : i; if (S.sel != null) A.sfx.pick(0); } return; }
@@ -389,7 +393,15 @@ $('btnKids').onclick = () => { S.kids = !S.kids; ls.set('cm-kids', S.kids ? '1' 
 $('btnSound').onclick = () => { A.unlock(); A.setMuted(!A.isMuted()); applyLang(); };
 $('btnQ').onclick = () => { const o = ['low', 'mid', 'high', 'ultra']; applyQuality(o[(o.indexOf(S.q) + 1) % 4], true); };
 $('bHammer').onclick = () => useBoost('hammer'); $('bBroom').onclick = () => useBoost('broom'); $('bShuffle').onclick = () => useBoost('shuffle'); $('bHint').onclick = () => { if (canMove()) { S.idleT = 99; A.sfx.ui(); } };
-$('btnSkip').onclick = e => { e.stopPropagation(); A.unlock(); endIntro(); }; $('btnTapSound').onclick = e => { e.stopPropagation(); A.unlock(); setTimeout(() => { audioBadge(); if (A.state() === 'running' && S.state === 'intro' && S.introT < 1.2) startIntro(); }, 80); };
+// ---- ONE TAP TO PLAY: the first tap/click anywhere on the opening goes straight into the level (sound unlocks on that same tap) ----
+let eatClick = 0;
+function playNow() { if (S.state !== 'intro') return; A.unlock(); setTimeout(audioBadge, 60); endIntro(); start('level', S.li); }
+function introTap(e) { if (S.state !== 'intro' || (e.target && e.target.closest && e.target.closest('#top'))) return; if (e.pointerType === 'touch' && !isTouch) { isTouch = true; applyLang(); } eatClick = performance.now() + 450; playNow(); }
+window.addEventListener('pointerup', introTap);
+window.addEventListener('click', e => { if (performance.now() < eatClick) { e.stopPropagation(); e.preventDefault(); eatClick = 0; return; } introTap(e); }, true); // the same tap must not also hit a booster
+for (const ev of ['touchend', 'click', 'keydown']) window.addEventListener(ev, () => A.unlock(), { capture: true, passive: true }); // iOS: resume audio inside a real user gesture
+$('btnMore').onclick = () => { S.more = true; A.unlock(); A.sfx.ui(); setUI(); }; $('btnMoreX').onclick = $('moreBg').onclick = () => { S.more = false; A.sfx.ui(); setUI(); };
+$('btnQ2').onclick = () => $('btnQ').onclick();
 $('btnIntro').onclick = () => { A.unlock(); startIntro(); }; $('lvCard').onclick = hideLevelCard;
 $('eName').addEventListener('keydown', e => e.stopPropagation());
 window.addEventListener('resize', resize);

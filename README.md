@@ -19,7 +19,7 @@ A cinematic 3D match-3 in a witch's kitchen at night. The board floats as a lico
 **Modes:** level journey · **Player 1 vs Player 2** hot-seat Candy Duel (one board, alternating moves, highest score wins).
 **Difficulty:** Easy / Medium / Hard (moves, colours, boosters, hint delay, how fast the brew boils). **Kids mode:** unlimited moves (can't fail), 5 colours, hints after 3 s, plenty of boosters.
 
-The game opens with a cinematic: a bonbon falls past the moon into the cauldron, sets off a real cascade, and the cauldron erupts (skippable, replay with 🎬). English by default, German on the DE button (remembered). A 1080×1350 score card to save or share. Quality levels (Normal by default; steps down only if the frame rate stays low).
+**One tap to play.** The game opens with a cinematic: a bonbon falls past the moon into the cauldron, sets off a real cascade, and the cauldron erupts. Tap (or click) anywhere and you are straight in Level 1, sound on. After the opening the start screen has one big PLAY button; levels, the duel, difficulty, kids mode, quality and the intro replay sit behind "Levels & options". The language follows the browser (German for German browsers, English otherwise) with a small DE/EN switch (remembered). A 1080×1350 score card to save or share. Quality is automatic (Normal, steps down only if the frame rate stays low).
 
 ## Tech
 - Three.js (WebGL): MeshPhysical candies with clearcoat, sheen and iridescence, PMREM environment light, shadowed key light, potion and geyser shaders, instanced candy fountain, a jelly monster with a wobble vertex shader, HDR bloom with a clamped high-pass, colour grade with vignette and grain, MSAA.
@@ -32,7 +32,8 @@ The game opens with a cinematic: a bonbon falls past the moon into the cauldron,
 ```
 npm install
 node tools/build.mjs
-python3 test/test_game.py   # headless Chrome (SwiftShader) via Playwright
+python3 test/test_game.py     # headless Chrome (SwiftShader) via Playwright
+python3 test/test_mobile.py   # phones: WebKit iPhone + Chromium Pixel, real taps, portrait + landscape
 ```
 
 Built with Grok Bot. Sound credits by source ID in `LICENSES/SOUNDS.md`. Code licenses: three.js (MIT), Fredoka font (OFL).

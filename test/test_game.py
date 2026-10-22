@@ -90,16 +90,20 @@ async def main():
         check('opening sounds: eruption boom, roar, gulps, title hit (real samples)', all(x in lg for x in ['boom_cine', 'roar', 'gulp']), sorted(set(lg))[:40])
         check('no console errors during the opening', not logs, logs[:3])
         # skip button
-        await ev(pg, '__cm.startIntro(); __cm.stepq(1/30, 10)'); await pg.click('#btnSkip'); check('Skip ends the opening into the menu', await ev(pg, '__cm.S.state') == 'menu')
+        await ev(pg, '__cm.startIntro(); __cm.stepq(1/30, 10)'); await pg.keyboard.press('Escape'); check('Esc ends the opening into the menu', await ev(pg, '__cm.S.state') == 'menu')
+        await ev(pg, '__cm.startIntro(); __cm.stepq(1/30, 10)'); await pg.mouse.click(270, 300); await ev(pg, '__cm.stepq(1/30, 2)')
+        check('ONE click anywhere on the opening goes straight into Level 1 (no menu, no stray booster)', await ev(pg, '[__cm.S.state, __cm.S.mode, __cm.S.li, __cm.movesLeft(), __cm.S.boostMode]') == ['play', 'level', 0, 20, None])
         await ctx.close()
 
         # ================= MENU, language, difficulty, privacy of visible text =================
         ctx, pg, logs = await page(b, viewport={'width': 1280, 'height': 800}, locale='de-DE')
         check('menu shown after skip', await pg.is_visible('#menu.show'))
-        check('English is the default (even on a German browser)', await ev(pg, '__cm.S.lang') == 'en' and await ev(pg, 'document.documentElement.lang') == 'en')
-        en = await ev(pg, 'document.body.innerText'); await pg.click('#btnLang'); de = await ev(pg, 'document.body.innerText')
-        check('DE toggle switches the UI to German', await ev(pg, '__cm.S.lang') == 'de' and en != de and ('Spielen' in de or 'Spieler' in de), de[:120])
-        await pg.click('#btnLang'); check('EN toggle back', await ev(pg, '__cm.S.lang') == 'en')
+        dk = await ev(pg, "['btnPlay', 'btnMore', 'btnLang', 'btnSound'].filter(id => { const e = document.getElementById(id), r = e.getBoundingClientRect(), t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return !(t && (t === e || e.contains(t))) || r.bottom > innerHeight || r.right > innerWidth; })")
+        check('desktop start screen: one big PLAY + options + DE/EN + sound, all clickable, options sheet hidden', not dk and await ev(pg, "document.getElementById('btnPlay').getBoundingClientRect().height >= 60 && !document.getElementById('more').classList.contains('show')"), dk)
+        check('language auto-detected: a German browser gets German', await ev(pg, '__cm.S.lang') == 'de' and await ev(pg, 'document.documentElement.lang') == 'de')
+        await pg.click('#btnMore'); de = await ev(pg, 'document.body.innerText'); await pg.click('#btnMoreX'); await pg.click('#btnLang'); await pg.click('#btnMore'); en = await ev(pg, 'document.body.innerText'); await pg.click('#btnMoreX')
+        check('EN toggle switches the UI to English (and is remembered)', await ev(pg, '__cm.S.lang') == 'en' and en != de and 'Play' in en and ('Spielen' in de or 'Spieler' in de) and await ev(pg, "localStorage.getItem('cm-lang')") == 'en', en[:120])
+        await pg.click('#btnLang'); check('DE toggle back', await ev(pg, '__cm.S.lang') == 'de'); await pg.click('#btnLang')
         for txt in (en, de):
             check('visible text: no "AI", no surname, no e-mail, no URL', not re.search(r'\bAI\b|\bKI\b|' + SUR + r'|@[\w-]+\.\w+|https?://|www\.', txt), re.findall(r'\bAI\b|' + SUR + r'|https?://\S+', txt))
         for txt in (en, de):
@@ -240,7 +244,7 @@ async def main():
         await ev(pg, '__cm.S.idleT = 0; __cm.S.hintMv = null; __cm.stepq(1/30, 100)'); check('Kids mode: hint after ~3 s', await ev(pg, '!!__cm.hint()'))
         await pg.click('#btnQuit'); await ev(pg, "__cm.toMenu(); document.getElementById('btnKids').click(); document.querySelector('#diff button[data-d=medium]').click()")
         # ================= Player 1 vs Player 2 =================
-        await ev(pg, '__cm.toMenu(); __cm.stepq(1/30, 3)'); await pg.click('#btnDuel'); await ev(pg, '__cm.stepq(1/30, 4)')
+        await ev(pg, '__cm.toMenu(); __cm.stepq(1/30, 3)'); await pg.click('#btnMore'); await pg.click('#btnDuel'); await ev(pg, '__cm.stepq(1/30, 4)')
         check('Cauldron Duel: 10 moves each, Player 1 starts, duel bar shows Player 1 / Player 2', await ev(pg, '[__cm.S.mode, __cm.movesLeft(), __cm.S.player]') == ['duel', 10, 0] and 'Player 1' in await pg.inner_text('#duelBar') and 'Player 2' in await pg.inner_text('#duelBar'))
         await setb(pg, {(0, 3): '0', (1, 3): '0', (2, 4): '0'}); await ev(pg, '__cm.swap([2,4],[2,3])'); await settle(pg)
         check('after Player 1 moves it is Player 2\'s turn (bell)', await ev(pg, '__cm.S.player') == 1 and await ev(pg, '__cm.S.score[0]') > 0)
@@ -254,6 +258,8 @@ async def main():
         check('frame clock: NaN/negative/huge dt never jump or reverse (≤ 1/20 s per step)', 0 <= g[0] <= 4 / 20 + 1e-9, g[0])
         check('NaN guards reset meter/flash/score; clock monotonic; camera finite', g[1] == 0 and g[2] == 0 and g[3] == 0 and g[4] and g[5], g)
         await ev(pg, '__cm.quality("low")'); check('quality toggle changes tier and is remembered', await ev(pg, '__cm.quality()') == 'low' and await ev(pg, "localStorage.getItem('cm-q')") == 'low')
+        lk = await ev(pg, '''(() => { const cyc = i => { __cm.start(i % 2 ? 'duel' : 'level', 0); __cm.stepq(1/30, 4); __cm.toMenu(); __cm.stepq(1/30, 3); }; for (let i = 0; i < 3; i++) cyc(i); const g0 = __cm.renderer.info.memory.geometries; for (let i = 0; i < 6; i++) cyc(i); __cm.step(1/30, 1); return [g0, __cm.renderer.info.memory.geometries]; })()''')
+        check('no GPU geometry leak: 6 more level/duel/menu rounds keep the geometry count flat (was +550 per round)', lk[1] - lk[0] <= 20, lk)
         check('console clean (difficulty/duel/guards)', not logs, logs[:3])
         await ctx.close()
 

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Cauldron Eruption – a cinematic 3D Halloween match-3 in a witch's cauldron</title>
+<meta name="description" content="Swap glossy Halloween candies on a tray floating in a bubbling witch's cauldron. 20 levels with slime, cobwebs, pumpkins and golden skulls, striped candies, wrapped bombs and ghost candies – and when the brew boils over, the cauldron erupts and the Gummy Ghoul rises. Easy, Medium, Hard, a kids mode and a Player 1 vs Player 2 duel.">
+<meta name="theme-color" content="#05040c">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Cauldron Eruption – a 3D Halloween match-3">
+<meta property="og:description" content="Swap glossy Halloween candies on a tray over a bubbling witch's cauldron – fill the brew and THE CAULDRON ERUPTS. Built with Grok Bot.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Cauldron Eruption">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%8D%AC%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-state="intro">
+<canvas id="game" aria-label="Cauldron Eruption game"></canvas>
+<div id="flash"></div>
+<div id="pops"></div>
+<div id="banner"></div>
+<div id="hud">
+  <div class="chip wide"><small data-t="levelL">Level</small><b id="hLevel">1</b></div>
+  <div class="chip"><small data-t="movesL">Moves</small><b id="hMoves">20</b></div>
+  <div class="chip gold score"><small data-t="scoreL">Score</small><b id="hScore">0</b><div class="sbar"><i id="starFill"></i><span id="starMarks"></span></div></div>
+</div>
+<div id="goals"></div>
+<div id="brew"><span class="ic">🧪</span><small data-t="brewL">Brew</small><div class="track"><i id="brewFill"></i></div></div>
+<div id="duelBar"><span id="dP1"></span><span id="dP2"></span></div>
+<div id="boosts">
+  <button id="bHammer" class="pill" aria-label="Hammer">🔨<em>1</em></button>
+  <button id="bBroom" class="pill" aria-label="Broom">🧹<em>1</em></button>
+  <button id="bShuffle" class="pill" aria-label="Shuffle">🔀<em>1</em></button>
+  <button id="bHint" class="pill" aria-label="Hint">💡</button>
+</div>
+<div id="top">
+  <button id="btnQuit" class="pill" aria-label="Menu">✕</button>
+  <button id="btnQ" class="pill">⚙</button>
+  <button id="btnSound" class="pill" aria-label="Sound">🔊</button>
+  <button id="btnLang" class="pill">DE</button>
+</div>
+<div id="toast"></div>
+<div id="lvCard"><small id="lcT"></small><div id="lcG"></div><em id="lcTip"></em></div>
+<div id="opening"><div id="oTitle"><span class="w1">CAULDRON</span><span class="w2">ERUPTION</span><div id="oSub">6 days to Halloween 🎃</div></div></div>
+<button id="btnSkip" class="pill" data-t="skip">Skip ⏭</button>
+<button id="btnTapSound" class="pill" data-t="tapSound">🔊 Tap for sound</button>
+<section id="menu" class="panel">
+  <div class="kicker" data-t="countdown"></div>
+  <h1><span class="w1">CAULDRON</span><span class="w2">ERUPTION</span></h1>
+  <p class="sub" data-t="tagline"></p>
+  <button id="btnPlay" class="big"><span data-t="play"></span><em id="playL"></em></button>
+  <div class="lab" data-t="levelsL"></div>
+  <div id="levels"></div>
+  <button id="btnDuel" class="big alt"><span data-t="duel"></span><em data-t="duelInfo"></em></button>
+  <div class="lab" data-t="diffL"></div>
+  <div id="diff" role="group"><button data-d="easy" data-t="easy"></button><button data-d="medium" data-t="medium"></button><button data-d="hard" data-t="hard"></button></div>
+  <div class="row"><button id="btnKids" class="toggle" aria-pressed="false"><i></i><span data-t="kids"></span></button><button id="btnIntro" class="pill" data-t="replay"></button></div>
+  <p class="tip kidsTip" data-t="kidsInfo"></p>
+  <p class="tip how"><span data-t="how1"></span> <span data-t="how2"></span> <span data-t="how3"></span></p>
+  <p class="tip keys" id="keysTip"></p>
+  <p class="tip credit" data-t="credit"></p>
+</section>
+<section id="end" class="panel">
+  <div class="kicker" id="eLevel"></div>
+  <h2 id="eTitle"></h2>
+  <div id="eScore" class="score">0</div>
+  <div id="eStars" class="stars"></div>
+  <div id="eBest" class="best"></div>
+  <div id="eStats" class="stats"></div>
+  <label class="name" id="eNameRow"><span data-t="nameL">Name on the card</span><input id="eName" maxlength="18" value="Player" autocomplete="off"></label>
+  <div class="row"><button id="btnCard" data-t="card"></button><button id="btnShare" data-t="share"></button></div>
+  <button id="btnNext" class="big" data-t="next"></button>
+  <div class="row"><button id="btnAgain" class="big alt" data-t="again"></button><button id="btnMenu" data-t="menu"></button></div>
+</section>
+<script src="js/sounds-src.js"></script>
+<script src="js/game.bundle.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "cauldron-eruption",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cauldron Eruption – cinematic 3D Halloween match-3 in a witch's cauldron (Three.js), runs from file://",
+  "scripts": {
+    "build": "node tools/build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "three": "^0.186.1"
+  },
+  "type": "module"
+}

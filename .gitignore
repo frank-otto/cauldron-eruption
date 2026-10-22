@@ -1,0 +1,6 @@
+node_modules/
+.sfx/
+.v1/
+test/shots/
+test/last-run.log
+*-PROGRESS.md
